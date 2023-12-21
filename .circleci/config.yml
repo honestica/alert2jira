@@ -14,7 +14,7 @@ commands:
 jobs:
   build-docker-image:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/python:3.10
     steps:
       - checkout
       - check-changed-files-or-halt:
@@ -22,6 +22,7 @@ jobs:
       - run:
           name: Run build
           command: |
+            pip3 install pipenv=2023.7.11
             make build
       - bot/docker-build-and-push:
           multiArchEnable: True
