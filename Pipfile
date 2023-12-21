@@ -1,0 +1,10 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "~=0.104"
+pydantic = "~=2.5"
+uvicorn = "~=0.24"
+requests = "~=2.25"
