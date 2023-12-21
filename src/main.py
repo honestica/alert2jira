@@ -22,7 +22,7 @@ def liveness():
     
     return {'status': 'OK'}
 
-@app.get('readiness')
+@app.get('/readiness')
 def readiness():
     jira_url = os.environ.get('JIRA_API_URL')
     jira_username = os.environ.get('JIRA_USERNAME')
