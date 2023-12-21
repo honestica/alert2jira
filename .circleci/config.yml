@@ -1,0 +1,38 @@
+version: 2.1
+
+orbs:
+  bot: lifen/bot@0
+
+commands:
+  check-changed-files-or-halt:
+    parameters:
+      pattern:
+        type: string
+    steps:
+      - run: git show -m HEAD --name-only --pretty="" | egrep '<< parameters.pattern >>' || circleci step halt
+
+jobs:
+  build-docker-image:
+    docker:
+      - image: cimg/go:1.21
+    steps:
+      - checkout
+      - check-changed-files-or-halt:
+          pattern: src|Dockerfile|Pipfile
+      - run:
+          name: Run build
+          command: |
+            make build
+      - bot/docker-build-and-push:
+          multiArchEnable: True
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - build-docker-image:
+          context: org-global
+          filters:
+            branches:
+              only:
+                - master
