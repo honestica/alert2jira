@@ -34,6 +34,7 @@ def readiness():
         raise HTTPException(status_code=503, detail='Jira API is not healthy')
 
 def check_jira_api_health(jira_url, jira_username, jira_api_token):
+    loglevel = os.environ.get('LOGLEVEL')
     try:
         url = f"{jira_url}/rest/api/2/myself"
         response = requests.get(
@@ -43,7 +44,8 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
         )
 
         if 200 <= response.status_code < 300:
-            print("Jira API is healthy")
+            if loglevel == "DEBUG":
+                print("Jira API is healthy")
             return True
         else:
             print(f"Jira API returned a non-success status code: {response.status_code}")
