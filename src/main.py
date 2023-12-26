@@ -7,7 +7,7 @@ app = FastAPI()
 
 
 class Grafana8Notification(BaseModel):
-    alert: dict
+    title: str
     message: str
 
 @app.get('/liveness')
@@ -56,7 +56,7 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
 
 @app.post('/grafana8-webhook')
 async def grafana_webhook(notification: Grafana8Notification):
-    summary = notification.dict()['alert']['title']
+    summary = notification.dict()['title']
     description = notification.dict()['message']
     create_jira_issue(summary,description)
     return {'message': 'Webhook received successfully'}
