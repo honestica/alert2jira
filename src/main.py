@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 import os
 from pydantic import BaseModel
 import requests
+from typing import Any
 
 app = FastAPI()
 
@@ -53,6 +54,11 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
     except Exception as e:
         print(f"Failed to connect to Jira API: {e}")
         return False
+    
+@app.post('/dummy')
+async def dummy_webhook(payload: Any = Body(None)):
+    print(payload)
+    return payload
 
 @app.post('/grafana8-webhook')
 async def grafana_webhook(notification: Grafana8Notification):
