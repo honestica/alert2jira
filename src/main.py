@@ -60,6 +60,12 @@ async def dummy_webhook(payload: Any = Body(None)):
     print(payload)
     return payload
 
+@app.post('/grafana8-mock')
+async def grafana8_mock(notification: Grafana8Notification):
+    summary = notification.dict()['title']
+    description = notification.dict()['message']
+    return create_jira_issue(summary,description)
+
 @app.post('/grafana8-webhook')
 async def grafana8_webhook(notification: Grafana8Notification):
     summary = notification.dict()['title']
