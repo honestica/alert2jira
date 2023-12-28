@@ -7,7 +7,7 @@ app = FastAPI()
 
 
 class Grafana8Notification(BaseModel):
-    alert: dict
+    title: str
     message: str
 
 @app.get('/liveness')
@@ -34,6 +34,7 @@ def readiness():
         raise HTTPException(status_code=503, detail='Jira API is not healthy')
 
 def check_jira_api_health(jira_url, jira_username, jira_api_token):
+    loglevel = os.environ.get('LOGLEVEL')
     try:
         url = f"{jira_url}/rest/api/2/myself"
         response = requests.get(
@@ -43,7 +44,8 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
         )
 
         if 200 <= response.status_code < 300:
-            print("Jira API is healthy")
+            if loglevel == "DEBUG":
+                print("Jira API is healthy")
             return True
         else:
             print(f"Jira API returned a non-success status code: {response.status_code}")
@@ -54,7 +56,7 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
 
 @app.post('/grafana8-webhook')
 async def grafana_webhook(notification: Grafana8Notification):
-    summary = notification.dict()['alert']['title']
+    summary = notification.dict()['title']
     description = notification.dict()['message']
     create_jira_issue(summary,description)
     return {'message': 'Webhook received successfully'}
