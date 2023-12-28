@@ -64,21 +64,35 @@ async def dummy_webhook(payload: Any = Body(None)):
 async def grafana8_webhook(notification: Grafana8Notification):
     summary = notification.dict()['title']
     description = notification.dict()['message']
-    create_jira_issue(summary,description)
+    send_jira_issue(summary,description)
     return {'message': 'Webhook received successfully'}
 
-def create_jira_issue(summary,description,jira_project_key=None):
+def send_jira_issue(summary,description,jira_project_key=None):
+    jira_payload = create_jira_issue(summary,description)
     jira_url = os.environ.get('JIRA_API_URL')
     jira_username = os.environ.get('JIRA_USERNAME')
     jira_api_token = os.environ.get('JIRA_API_TOKEN')
-    if not jira_project_key:
-        jira_project_key = os.environ.get('JIRA_PROJECT_KEY')
-    loglevel = os.environ.get('LOGLEVEL')
+    if not (jira_url and jira_username and jira_api_token):
+        raise ValueError("JIRA_API_URL, JIRA_USERNAME, JIRA_API_TOKEN must be set.")
+    response = requests.post(
+        f'{jira_url}/rest/api/2/issue/',
+        json=jira_payload,
+        auth=(jira_username, jira_api_token),
+        headers={'Content-Type': 'application/json'}
+    )
+    if response.status_code == 201:
+        print('Jira issue created successfully')
+    else:
+        print(f'Failed to create Jira issue. Status code: {response.status_code}, Error: {response.text}')
 
-    if not (jira_url and jira_username and jira_api_token and jira_project_key):
-        raise ValueError("JIRA_API_URL, JIRA_USERNAME, JIRA_API_TOKEN and JIRA_PROJECT_KEY must be set.")
+def create_jira_issue(summary,description,jira_project_key=None):
+    loglevel = os.environ.get('LOGLEVEL')
     if loglevel == "DEBUG":
         print(summary, description, jira_project_key)
+    if not jira_project_key:
+        jira_project_key = os.environ.get('JIRA_PROJECT_KEY')
+    if not jira_project_key:
+        raise ValueError("JIRA_PROJECT_KEY must be set")
     issue_data = {
         'fields': {
             'project': {'key': jira_project_key},
@@ -89,17 +103,7 @@ def create_jira_issue(summary,description,jira_project_key=None):
     }
     if loglevel == "DEBUG":
         print(issue_data)
-    response = requests.post(
-        f'{jira_url}/rest/api/2/issue/',
-        json=issue_data,
-        auth=(jira_username, jira_api_token),
-        headers={'Content-Type': 'application/json'}
-    )
-
-    if response.status_code == 201:
-        print('Jira issue created successfully')
-    else:
-        print(f'Failed to create Jira issue. Status code: {response.status_code}, Error: {response.text}')
+    return issue_data
 
 if __name__ == '__main__':
     app.run()
