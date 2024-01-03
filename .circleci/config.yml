@@ -22,7 +22,7 @@ jobs:
       - run:
           name: Run build
           command: |
-            pip3 install pipenv=2023.7.11
+            pip3 install pipenv==2023.7.11
             make build
       - bot/docker-build-and-push:
           multiArchEnable: True
