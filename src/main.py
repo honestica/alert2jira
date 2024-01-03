@@ -1,10 +1,11 @@
 import datetime
-from fastapi import FastAPI, HTTPException, Body
 import logging
 import os
-from pydantic import BaseModel
-import requests
 from typing import Any
+
+import requests
+from fastapi import Body, FastAPI, HTTPException
+from pydantic import BaseModel
 
 app = FastAPI()
 loglevel = os.environ.get("LOGLEVEL")
