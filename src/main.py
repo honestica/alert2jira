@@ -1,29 +1,49 @@
-from fastapi import FastAPI, HTTPException
+import datetime
+from fastapi import FastAPI, HTTPException, Body
+import logging
 import os
 from pydantic import BaseModel
 import requests
+from typing import Any
 
 app = FastAPI()
+loglevel = os.environ.get('LOGLEVEL')
+jira_url = os.environ.get('JIRA_API_URL')
+jira_username = os.environ.get('JIRA_USERNAME')
+jira_api_token = os.environ.get('JIRA_API_TOKEN')
+excluded_endpoints = ['/liveness','/readiness']
 
+def logger(log):
+    message='{"@timestamp":"%s","message":"%s"}' % (datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00","Z"), log)
+    return message
+
+class EndpointFilter(logging.Filter):
+    def __init__(self, excluded_endpoints: list[str]) -> None:
+        self.excluded_endpoints = excluded_endpoints
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.args and len(record.args) >= 3 and record.args[2] not in self.excluded_endpoints
 
 class Grafana8Notification(BaseModel):
     title: str
     message: str
 
-@app.get('/liveness')
-def liveness():
-    jira_url = os.environ.get('JIRA_API_URL')
-    jira_username = os.environ.get('JIRA_USERNAME')
-    jira_api_token = os.environ.get('JIRA_API_TOKEN')
-    #jira_project_key = os.environ.get('JIRA_PROJECT_KEY')
+if loglevel != "DEBUG":
+    logging.getLogger("uvicorn.access").addFilter(EndpointFilter(excluded_endpoints))
 
+
+@app.get('/liveness')
+async def liveness():
+    """liveness probe endpoint"""
     if not all([jira_url, jira_username, jira_api_token]):
+        print(logger("Jira environment variables are not properly set"))
         raise HTTPException(status_code=500, detail='Jira environment variables are not properly set')
     
     return {'status': 'OK'}
 
 @app.get('/readiness')
-def readiness():
+async def readiness():
+    """readiness probe endpoint"""
     jira_url = os.environ.get('JIRA_API_URL')
     jira_username = os.environ.get('JIRA_USERNAME')
     jira_api_token = os.environ.get('JIRA_API_TOKEN')
@@ -33,8 +53,29 @@ def readiness():
     else:
         raise HTTPException(status_code=503, detail='Jira API is not healthy')
 
+@app.post('/dummy')
+async def dummy_webhook(payload: Any = Body(None)):
+    """dummy endpoint that returns inputed payload"""
+    print(payload)
+    return payload
+
+@app.post('/grafana8-mock')
+async def grafana8_mock(notification: Grafana8Notification):
+    """creates and returns JIRA payload from grafana 8 alert input"""
+    summary = notification.title
+    description = notification.message
+    return create_jira_payload(summary,description)
+
+@app.post('/grafana8-webhook')
+async def grafana8_webhook(notification: Grafana8Notification):
+    """Creates JIRA issue from grafana 8 alert input"""
+    summary = notification.title
+    description = notification.message
+    send_jira_issue(summary,description)
+    return {'message': 'Webhook received successfully'}
+
 def check_jira_api_health(jira_url, jira_username, jira_api_token):
-    loglevel = os.environ.get('LOGLEVEL')
+    """Query JIRA api to check if live"""
     try:
         url = f"{jira_url}/rest/api/2/myself"
         response = requests.get(
@@ -45,34 +86,25 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
 
         if 200 <= response.status_code < 300:
             if loglevel == "DEBUG":
-                print("Jira API is healthy")
+                print(logger("Jira API is healthy"))
             return True
         else:
             print(f"Jira API returned a non-success status code: {response.status_code}")
             return False
     except Exception as e:
-        print(f"Failed to connect to Jira API: {e}")
+        print(logger(f"Failed to connect to Jira API: {e}"))
         return False
-
-@app.post('/grafana8-webhook')
-async def grafana_webhook(notification: Grafana8Notification):
-    summary = notification.dict()['title']
-    description = notification.dict()['message']
-    create_jira_issue(summary,description)
-    return {'message': 'Webhook received successfully'}
-
-def create_jira_issue(summary,description,jira_project_key=None):
-    jira_url = os.environ.get('JIRA_API_URL')
-    jira_username = os.environ.get('JIRA_USERNAME')
-    jira_api_token = os.environ.get('JIRA_API_TOKEN')
+    
+def create_jira_payload(summary,description,jira_project_key=None):
+    """Create JIRA json payload with inputed alert"""
     if not jira_project_key:
         jira_project_key = os.environ.get('JIRA_PROJECT_KEY')
-    loglevel = os.environ.get('LOGLEVEL')
-
-    if not (jira_url and jira_username and jira_api_token and jira_project_key):
-        raise ValueError("JIRA_API_URL, JIRA_USERNAME, JIRA_API_TOKEN and JIRA_PROJECT_KEY must be set.")
+        if loglevel == "DEBUG":
+            print(logger("Using LOGLEVEL env var for JIRA_PROJECT_KEY"))
     if loglevel == "DEBUG":
-        print(summary, description, jira_project_key)
+        print(logger("Summary: {summary},\nDescription: {description},\nJIRA project: {jira_project_key}"))
+    if not jira_project_key:
+        raise ValueError("JIRA_PROJECT_KEY must be set")
     issue_data = {
         'fields': {
             'project': {'key': jira_project_key},
@@ -82,18 +114,25 @@ def create_jira_issue(summary,description,jira_project_key=None):
         }
     }
     if loglevel == "DEBUG":
-        print(issue_data)
+        print(logger(issue_data))
+    return issue_data
+    
+def send_jira_issue(summary,description,jira_project_key=None):
+    """Send json payload to JIRA"""
+    jira_payload = create_jira_payload(summary,description)
+    if not (jira_url and jira_username and jira_api_token):
+        raise ValueError("JIRA_API_URL, JIRA_USERNAME, JIRA_API_TOKEN must be set.")
     response = requests.post(
         f'{jira_url}/rest/api/2/issue/',
-        json=issue_data,
+        json=jira_payload,
         auth=(jira_username, jira_api_token),
         headers={'Content-Type': 'application/json'}
     )
-
     if response.status_code == 201:
-        print('Jira issue created successfully')
+        print(logger("Jira issue created successfully"))
     else:
-        print(f'Failed to create Jira issue. Status code: {response.status_code}, Error: {response.text}')
+        print(logger("Failed to create Jira issue. Status code: {response.status_code}, Error: {response.text}"))
+
 
 if __name__ == '__main__':
     app.run()
