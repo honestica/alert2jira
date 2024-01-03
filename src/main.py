@@ -92,7 +92,7 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
             print(f"Jira API returned a non-success status code: {response.status_code}")
             return False
     except Exception as e:
-        print(logger("Failed to connect to Jira API: %s" % e))
+        print(logger(f"Failed to connect to Jira API: {e}"))
         return False
     
 def create_jira_payload(summary,description,jira_project_key=None):
@@ -102,7 +102,7 @@ def create_jira_payload(summary,description,jira_project_key=None):
         if loglevel == "DEBUG":
             print(logger("Using LOGLEVEL env var for JIRA_PROJECT_KEY"))
     if loglevel == "DEBUG":
-        print(logger("Summary: %s,\nDescription: %s,\nJIRA project: %s" % (summary, description, jira_project_key)))
+        print(logger("Summary: {summary},\nDescription: {description},\nJIRA project: {jira_project_key}"))
     if not jira_project_key:
         raise ValueError("JIRA_PROJECT_KEY must be set")
     issue_data = {
@@ -131,7 +131,7 @@ def send_jira_issue(summary,description,jira_project_key=None):
     if response.status_code == 201:
         print(logger("Jira issue created successfully"))
     else:
-        print(logger("Failed to create Jira issue. Status code: %s, Error: %s" % (response.status_code, response.text)))
+        print(logger("Failed to create Jira issue. Status code: {response.status_code}, Error: {response.text}"))
 
 
 if __name__ == '__main__':
