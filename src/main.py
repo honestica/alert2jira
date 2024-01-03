@@ -33,7 +33,7 @@ if loglevel != "DEBUG":
 
 
 @app.get('/liveness')
-def liveness():
+async def liveness():
     if not all([jira_url, jira_username, jira_api_token]):
         print(logger("Jira environment variables are not properly set"))
         raise HTTPException(status_code=500, detail='Jira environment variables are not properly set')
@@ -41,7 +41,7 @@ def liveness():
     return {'status': 'OK'}
 
 @app.get('/readiness')
-def readiness():
+async def readiness():
     jira_url = os.environ.get('JIRA_API_URL')
     jira_username = os.environ.get('JIRA_USERNAME')
     jira_api_token = os.environ.get('JIRA_API_TOKEN')
