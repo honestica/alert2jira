@@ -95,6 +95,7 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
         print(logger("Failed to connect to Jira API: %s" % e))
         return False
     
+def create_jira_payload(summary,description,jira_project_key=None):
     """Create JIRA json payload with inputed alert"""
     if not jira_project_key:
         jira_project_key = os.environ.get('JIRA_PROJECT_KEY')
@@ -118,6 +119,7 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
     
 def send_jira_issue(summary,description,jira_project_key=None):
     """Send json payload to JIRA"""
+    jira_payload = create_jira_payload(summary,description)
     if not (jira_url and jira_username and jira_api_token):
         raise ValueError("JIRA_API_URL, JIRA_USERNAME, JIRA_API_TOKEN must be set.")
     response = requests.post(
