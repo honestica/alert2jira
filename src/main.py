@@ -34,6 +34,7 @@ if loglevel != "DEBUG":
 
 @app.get('/liveness')
 async def liveness():
+    """liveness probe endpoint"""
     if not all([jira_url, jira_username, jira_api_token]):
         print(logger("Jira environment variables are not properly set"))
         raise HTTPException(status_code=500, detail='Jira environment variables are not properly set')
@@ -42,6 +43,7 @@ async def liveness():
 
 @app.get('/readiness')
 async def readiness():
+    """readiness probe endpoint"""
     jira_url = os.environ.get('JIRA_API_URL')
     jira_username = os.environ.get('JIRA_USERNAME')
     jira_api_token = os.environ.get('JIRA_API_TOKEN')
@@ -53,23 +55,27 @@ async def readiness():
 
 @app.post('/dummy')
 async def dummy_webhook(payload: Any = Body(None)):
+    """dummy endpoint that returns inputed payload"""
     print(payload)
     return payload
 
 @app.post('/grafana8-mock')
 async def grafana8_mock(notification: Grafana8Notification):
+    """creates and returns JIRA payload from grafana 8 alert input"""
     summary = notification.title
     description = notification.message
     return create_jira_payload(summary,description)
 
 @app.post('/grafana8-webhook')
 async def grafana8_webhook(notification: Grafana8Notification):
+    """Creates JIRA issue from grafana 8 alert input"""
     summary = notification.title
     description = notification.message
     send_jira_issue(summary,description)
     return {'message': 'Webhook received successfully'}
 
 def check_jira_api_health(jira_url, jira_username, jira_api_token):
+    """Query JIRA api to check if live"""
     try:
         url = f"{jira_url}/rest/api/2/myself"
         response = requests.get(
@@ -89,7 +95,7 @@ def check_jira_api_health(jira_url, jira_username, jira_api_token):
         print(logger("Failed to connect to Jira API: %s" % e))
         return False
     
-def create_jira_issue(summary,description,jira_project_key=None):
+    """Create JIRA json payload with inputed alert"""
     if not jira_project_key:
         jira_project_key = os.environ.get('JIRA_PROJECT_KEY')
         if loglevel == "DEBUG":
@@ -111,7 +117,7 @@ def create_jira_issue(summary,description,jira_project_key=None):
     return issue_data
     
 def send_jira_issue(summary,description,jira_project_key=None):
-    jira_payload = create_jira_issue(summary,description)
+    """Send json payload to JIRA"""
     if not (jira_url and jira_username and jira_api_token):
         raise ValueError("JIRA_API_URL, JIRA_USERNAME, JIRA_API_TOKEN must be set.")
     response = requests.post(
