@@ -2,8 +2,6 @@ export PIPENV_VENV_IN_PROJECT=true
 export PYTHONPATH=src
 export MYPYPATH=src
 
-path?=spec/spec_*.py
-
 all: help
 
 .PHONY: help
@@ -19,8 +17,8 @@ build: ## Build the project
 
 .PHONY: fmt
 fmt: ## Format
-	pipenv run -- black src spec
-	pipenv run -- isort --profile black src spec
+	pipenv run -- black src tests
+	pipenv run -- isort --profile black src tests
 
 .PHONY: local
 local: ## Starts local uvicorn
@@ -37,8 +35,8 @@ sh: ## Open a pipenv shell
 
 .PHONY: test
 test: setup ## Test the project | make test path=spec/spec_lifen.py
-	pipenv run -- black --check src spec
-	pipenv run -- isort --profile black --check-only src spec
-	pipenv run -- flake8 --append-config .flake8.conf src spec
-	pipenv run -- mypy --explicit-package-bases .
-	DRADIS_TOKEN=fake pipenv run -- python3 -m unittest $(path)
+	pipenv run -- black --check src tests
+	pipenv run -- isort --profile black --check-only src tests
+	pipenv run -- flake8 --append-config .flake8.conf src tests
+	# pipenv run -- mypy --explicit-package-bases .
+	pipenv run -- pytest

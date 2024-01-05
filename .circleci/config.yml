@@ -12,9 +12,21 @@ commands:
       - run: git show -m HEAD --name-only --pretty="" | egrep '<< parameters.pattern >>' || circleci step halt
 
 jobs:
+  test:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - run:
+          name: Test app
+          environment:
+            JIRA_PROJECT_KEY: test
+          command: |
+            pip3 install pipenv==2023.11.15
+            make test
   build-docker-image:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
     steps:
       - checkout
       - check-changed-files-or-halt:
@@ -22,7 +34,7 @@ jobs:
       - run:
           name: Run build
           command: |
-            pip3 install pipenv==2023.7.11
+            pip3 install pipenv==2023.11.15
             make build
       - bot/docker-build-and-push:
           multiArchEnable: True
@@ -31,6 +43,8 @@ workflows:
   version: 2
   main:
     jobs:
+      - test:
+          context: org-global
       - build-docker-image:
           context: org-global
           filters:
