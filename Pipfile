@@ -11,7 +11,7 @@ uvicorn = "~=0.24"
 
 [dev-packages]
 black = "~=23.12"
-flake8 = "~=6.1"
+flake8 = "~=7.0"
 httpx = "~=0.26"
 isort = "~=5.13"
 pytest = "~=7.4"
