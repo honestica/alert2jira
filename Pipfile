@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = "~=0.104"
+fastapi = "~=0.109"
 pydantic = "~=2.5"
 requests = "~=2.25"
 uvicorn = "~=0.24"
