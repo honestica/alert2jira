@@ -8,10 +8,19 @@ client = TestClient(app)
 def test_dummy():
     print("test dummy")
     response = client.post(
-        "/dummy", json={"title": "test dummy", "message": "Dummy test"}
+        "/dummy",
+        json={
+            "title": "test dummy",
+            "message": "Dummy test",
+            "ruleUrl": "https://www.lifen.fr",
+        },
     )
     assert response.status_code == 200
-    assert response.json() == {"title": "test dummy", "message": "Dummy test"}
+    assert response.json() == {
+        "title": "test dummy",
+        "message": "Dummy test",
+        "ruleUrl": "https://www.lifen.fr",
+    }
 
 
 def test_mock_grafana():
@@ -21,12 +30,13 @@ def test_mock_grafana():
         json={
             "title": "test jira payload creation title",
             "message": "test jira payload creation message",
+            "ruleUrl": "https://www.lifen.fr",
         },
     )
     assert response.status_code == 200
     assert response.json() == {
         "fields": {
-            "description": "test jira payload creation message",
+            "description": "test jira payload creation message\nhttps://www.lifen.fr",
             "issuetype": {"id": "3"},
             "project": {"key": "test"},
             "summary": "test jira payload creation title",

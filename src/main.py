@@ -38,6 +38,7 @@ class EndpointFilter(logging.Filter):
 class Grafana8Notification(BaseModel):
     title: str
     message: str
+    ruleUrl: str
 
 
 if loglevel != "DEBUG":
@@ -80,7 +81,8 @@ async def dummy_webhook(payload: Any = Body(None)):
 async def grafana8_mock(notification: Grafana8Notification):
     """creates and returns JIRA payload from grafana 8 alert input"""
     summary = notification.title
-    description = notification.message
+    description = f"{notification.message}\n{notification.ruleUrl}"
+
     return create_jira_payload(summary, description)
 
 
@@ -88,7 +90,7 @@ async def grafana8_mock(notification: Grafana8Notification):
 async def grafana8_webhook(notification: Grafana8Notification):
     """Creates JIRA issue from grafana 8 alert input"""
     summary = notification.title
-    description = notification.message
+    description = f"{notification.message}\n{notification.ruleUrl}"
     send_jira_issue(summary, description)
     return {"message": "Webhook received successfully"}
 
