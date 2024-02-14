@@ -10,7 +10,7 @@ requests = "~=2.25"
 uvicorn = "~=0.27"
 
 [dev-packages]
-black = "~=24.1"
+black = "~=24.2"
 flake8 = "~=7.0"
 httpx = "~=0.26"
 isort = "~=5.13"
