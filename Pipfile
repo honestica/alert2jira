@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 fastapi = "~=0.112"
-pydantic = "~=2.8"
+pydantic = "~=2.9"
 requests = "~=2.32"
 uvicorn = "~=0.30"
 
