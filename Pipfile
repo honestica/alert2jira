@@ -7,7 +7,7 @@ name = "pypi"
 fastapi = "~=0.115"
 pydantic = "~=2.9"
 requests = "~=2.32"
-uvicorn = "~=0.30"
+uvicorn = "~=0.31"
 
 [dev-packages]
 black = "~=24.8"
