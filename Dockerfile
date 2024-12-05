@@ -1,4 +1,4 @@
-FROM honestica/python:3.11-2610
+FROM honestica/python:3.12-3187
 WORKDIR /app
 
 USER root
