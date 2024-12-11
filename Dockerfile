@@ -1,4 +1,4 @@
-FROM honestica/python:3.12-3187
+FROM python:3.12
 WORKDIR /app
 
 USER root
@@ -10,7 +10,9 @@ RUN pipenv sync --clear --bare --system \
  && rm Pipfile Pipfile.lock
 
 COPY src /app/src/
-
+RUN useradd -m appuser \
+ && chown -R appuser:appuser /app
+ 
 USER appuser
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
