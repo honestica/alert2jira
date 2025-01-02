@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  alert2jira:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: alert2jira
+    ports:
+      - "8000:8000"
+    environment:
+      - JIRA_API_URL=value1
+      - JIRA_USERNAME=value2
+      - JIRA_API_TOKEN=value3
+    
