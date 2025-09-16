@@ -3,6 +3,12 @@ WORKDIR /app
 
 USER root
 
+# Upgrade packages
+RUN set -eux; \
+  apt-get update; \
+  apt-get dist-upgrade -y; \
+  apt-get dist-clean
+
 RUN pip3 install pipenv==2024.4.0
 COPY Pipfile /app
 COPY Pipfile.lock /app
@@ -12,7 +18,7 @@ RUN pipenv sync --clear --bare --system \
 COPY src /app/src/
 RUN useradd -m appuser \
  && chown -R appuser:appuser /app
- 
+
 USER appuser
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
